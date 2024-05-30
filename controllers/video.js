@@ -94,21 +94,16 @@ const generateVideo = asyncHandler(async (req, res) => {
 
     const framesToProcess = Array.from({ length: frameCount }, (_, i) => i + 1);
     const circleFrames = data.map(({ time }) => Math.round(time * fps));
+    const persistentCircles = [];
 
     for (const frameIndex of framesToProcess) {
-      const relevantCircles = new Set(
-        circleFrames.filter((circleFrame) => circleFrame <= frameIndex)
-      ); // Use Set for efficient membership checking
-
-      const framePath = path.join(outputDir, `frame-${frameIndex}.png`);
-      const circlesToDraw = [];
-      for (let i = 0; i < data.length; i++) {
-        if (relevantCircles.has(circleFrames[i])) {
-          circlesToDraw.push(data[i]);
+      circleFrames.forEach((circleFrame, i) => {
+        if (frameIndex >= circleFrame) {
+          persistentCircles.push(data[i]);
         }
-      }
-
-      await drawCirclesOnFrame(framePath, circlesToDraw, radius);
+      });
+      const framePath = path.join(outputDir, `frame-${frameIndex}.png`);
+      await drawCirclesOnFrame(framePath, persistentCircles, radius);
     }
 
     console.log(`Combining frames to video...`);
